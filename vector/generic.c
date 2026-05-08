@@ -202,3 +202,4 @@ Vector* createVectorBySize(size_t elem_size, size_t vector_size) {
 
     return vector;
 }
+
