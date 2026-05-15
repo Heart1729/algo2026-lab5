@@ -1,1 +1,19 @@
-// Полностью на ваше усмотрение (только переиспользуйте код из предыдущих лабораторных, если он вам подходит)
+#include "../vector/generic.h"
+#include "rbtree.h"
+
+Vector* rbSearch(const RBTree* tree, const char* key) {
+    RBNode *node = tree->root;
+    while (node != tree->nil) {
+        if (key == node->key) {
+            return node->postings;
+        }
+        else if (key < node->key) {
+            node = node->left;
+        }
+        else {
+            node = node->right;
+        }
+    }
+
+    return NULL;
+}
