@@ -4,10 +4,11 @@
 Vector* rbSearch(const RBTree* tree, const char* key) {
     RBNode *node = tree->root;
     while (node != tree->nil) {
-        if (key == node->key) {
+        int compare = strcmp(key, node->key);
+        if (compare == 0) {
             return node->postings;
         }
-        else if (key < node->key) {
+        else if (compare < 0) {
             node = node->left;
         }
         else {
