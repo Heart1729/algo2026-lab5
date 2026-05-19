@@ -30,7 +30,7 @@ static Vector *pairwiseIntersect(Vector *list1, Vector *list2) {
             return NULL;
         }
 
-        if (posting1 == posting2) {
+        if (posting1->doc_id == posting2->doc_id) {
             if (appendVectorItem(intersect, posting1) != 0) {
                 printf("Ошибка добавления PostingEntry в Vector!\n");
                 vectorFree(intersect);
@@ -51,14 +51,27 @@ static Vector *pairwiseIntersect(Vector *list1, Vector *list2) {
     return intersect;
 }
 
+static void *deepCopyData(void *data) {
+    size_t size = sizeof(data);
+    void *copy_data = (void *)malloc(size);
+
+    if (copy_data == NULL) {
+        return NULL;
+    }
+
+    memcpy(copy_data, data, size);
+    
+    return copy_data;
+}
+
 Vector* intersectPostings(Vector** lists, int n) {
-    Vector *previous_intersect = lists[0];
+    Vector *previous_intersect = deepCopyData(lists[0]);
     if (previous_intersect == NULL) {
         return NULL;
     }
 
     for (int i = 1; i < n; i++) {
-        Vector *curr_list = lists[i];
+        Vector *curr_list = deepCopyData(lists[i]);
         if (curr_list == NULL) {
             return NULL;
         }
@@ -68,6 +81,7 @@ Vector* intersectPostings(Vector** lists, int n) {
             return NULL;
         }
 
+        vectorFree(previous_intersect);
         previous_intersect = curr_intersect;
     }
 
@@ -94,7 +108,7 @@ static SearchResult* createSearchResult(int doc_id, char *title, int score) {
     }
 
     result->doc_id = doc_id;
-    strcmp(result->title, title);
+    strncpy(result->title, title, sizeof(title));
     result->score = score;
 
     return result;
@@ -199,7 +213,7 @@ SearchResults* search(Index* idx, const char* query) {
         // !! Возможно стоит создать копию postings и хранить ее !!
         postings_lists[i] = postings;
 
-        token = strtok(query_copy, delimeter);
+        token = strtok(NULL, delimeter);
     }
 
     free(query_copy);
@@ -256,11 +270,11 @@ void printResultsText(const SearchResults* sr) {
 }
 
 void printResultsJSON(const SearchResults* sr) {
-    const char *filename = "search_results.json"
+    const char *filename = "search_results.json";
 
     cJSON *root = cJSON_CreateObject();
     if (!root) {
-        return -1;
+        return;
     }
 
     cJSON_AddNumberToObject(root, "time_ms", sr->time_ms);
@@ -269,7 +283,7 @@ void printResultsJSON(const SearchResults* sr) {
     cJSON *documents_array = cJSON_CreateArray();
     if (!documents_array) {
         cJSON_Delete(root);
-        return -1;
+        return;
     }
     cJSON_AddItemToObject(root, "documents", documents_array);
 
@@ -296,7 +310,7 @@ void printResultsJSON(const SearchResults* sr) {
     char *json_string = cJSON_Print(root);
     if (!json_string) {
         cJSON_Delete(root);
-        return -1;
+        return;
     }
 
     // 6. Записываем строку в файл
@@ -304,7 +318,7 @@ void printResultsJSON(const SearchResults* sr) {
     if (!file) {
         cJSON_free(json_string);
         cJSON_Delete(root);
-        return -1;
+        return;
     }
 
     fputs(json_string, file);
@@ -313,8 +327,6 @@ void printResultsJSON(const SearchResults* sr) {
     // 7. Освобождаем выделенную память cJSON
     cJSON_free(json_string);
     cJSON_Delete(root);
-
-    return 0;
 }
 
 void freeSearchResults(SearchResults* sr) {

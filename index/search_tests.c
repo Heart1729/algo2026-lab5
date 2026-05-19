@@ -3,18 +3,10 @@
 #include <string.h>
 #include <assert.h>
 #include <ctype.h>
-
-// Подключаем необходимые заголовочные файлы вашего проекта
-#include ".vector/generic.h"
+#include "../vector/generic.h"
 #include "index.h"
 #include "posting.h"
 #include "search.h"
-
-/* 
-   Внимание: Чтобы протестировать функции со спецификатором static (например, pairwiseIntersect), 
-   этот тестовый код рекомендуется вставить в самый конец вашего файла реализации search.c 
-   или временно убрать ключевое слово static у тестируемых функций.
-*/
 
 // Вспомогательная функция для быстрой сборки тестового вектора PostingEntry
 static Vector* create_test_posting_vector(int* ids, int count) {

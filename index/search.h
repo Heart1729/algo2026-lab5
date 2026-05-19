@@ -15,6 +15,7 @@ typedef struct {
     double  time_ms;
 } SearchResults;
 
+static void *deepCopyData(void *data);
 static Vector *pairwiseIntersect(Vector *list1, Vector *list2);
 Vector*        intersectPostings(Vector** lists, int n);
 static SearchResults* createSearchResults(Vector *results, int total, double time_ms);
