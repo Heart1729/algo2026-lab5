@@ -242,7 +242,47 @@ SearchResults* search(Index* idx, const char* query) {
     clock_t end = clock();
     clock_t time_delta = end - start;
 
-    SearchResults *search_results = createSearchResults(intersect, total, time_delta);
+    Vector *intersect_changed = createVector(sizeof(SearchResult));
+    if (intersect_changed == NULL) {
+        free(postings_lists);
+        vectorFree(intersect);
+
+        return NULL;
+    }
+
+    for (int i = 0; i < intersect->size; i++) {
+        PostingEntry *curr_item = getVectorItem(intersect, i);
+        if (curr_item == NULL) {
+            printf("Ошибка нахождения элемента в Vector intersect!\n");
+            vectorFree(intersect_changed);
+            free(postings_lists);
+            vectorFree(intersect);
+
+            return NULL;
+        }
+
+        int score = 1;
+        SearchResult *changed_item = createSearchResult(curr_item->doc_id, curr_item->title, score);
+        if (changed_item == NULL) {
+            vectorFree(intersect_changed);
+            free(postings_lists);
+            vectorFree(intersect);
+
+            return NULL;
+        }
+
+        if (appendVectorItem(intersect_changed, changed_item) != 0) {
+            printf("Ошибка добавления элемента в Vector intersect_changed!\n");
+            vectorFree(intersect_changed);
+            free(postings_lists);
+            vectorFree(intersect);
+            free(changed_item);
+
+            return NULL;
+        }
+    }
+
+    SearchResults *search_results = createSearchResults(intersect_changed, total, time_delta);
     if (search_results == NULL) {
         free(postings_lists);
         vectorFree(intersect);
