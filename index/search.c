@@ -65,15 +65,52 @@ static void *deepCopyData(void *data) {
 }
 
 Vector* intersectPostings(Vector** lists, int n) {
-    Vector *previous_intersect = deepCopyData(lists[0]);
+    Vector *previous_intersect = createVector(sizeof(PostingEntry));
     if (previous_intersect == NULL) {
         return NULL;
     }
 
-    for (int i = 1; i < n; i++) {
-        Vector *curr_list = deepCopyData(lists[i]);
-        if (curr_list == NULL) {
+    for (int j = 0; j < lists[0]->size; j++) {
+        void *prev_item = getVectorItem(lists[0], j);
+        if (prev_item == NULL) {
+            printf("Ошибка нахождения элемента в Vector lists[0]!\n");
+            vectorFree(previous_intersect);
+
             return NULL;
+        }
+
+        if (appendVectorItem(previous_intersect, prev_item) != 0) {
+            printf("Ошибка добавления элемента в Vector previous_intersect!\n");
+            vectorFree(previous_intersect);
+
+            return NULL;
+        }
+    }
+
+    for (int i = 1; i < n; i++) {
+        Vector *curr_list = createVector(sizeof(PostingEntry));
+        if (curr_list == NULL) {
+            vectorFree(previous_intersect);
+            return NULL;
+        }
+
+        for (int j = 0; j < lists[i]->size; j++) {
+            void *curr_item = getVectorItem(lists[i], j);
+            if (curr_item == NULL) {
+                printf("Ошибка нахождения элемента в Vector lists[i]!\n");
+                vectorFree(previous_intersect);
+                vectorFree(curr_list);
+
+                return NULL;
+            }
+
+            if (appendVectorItem(curr_list, curr_item) != 0) {
+                printf("Ошибка добавления элемента в Vector curr_list!\n");
+                vectorFree(previous_intersect);
+                vectorFree(curr_list);
+
+                return NULL;
+            }
         }
 
         Vector *curr_intersect = pairwiseIntersect(previous_intersect, curr_list);
@@ -108,7 +145,8 @@ static SearchResult* createSearchResult(int doc_id, char *title, int score) {
     }
 
     result->doc_id = doc_id;
-    strncpy(result->title, title, sizeof(title));
+    strncpy(result->title, title, sizeof(result->title) - 1);
+    result->title[sizeof(result->title) - 1] = '\0';
     result->score = score;
 
     return result;
@@ -229,18 +267,22 @@ SearchResults* search(Index* idx, const char* query) {
     int total = intersect->size;
 
     if (intersect->size > 10) {
-        intersect = createIntersectTop10(intersect);
-        if (intersect == NULL) {
+        Vector *changed_intersect = createIntersectTop10(intersect);
+        if (changed_intersect == NULL) {
             free(postings_lists);
             vectorFree(intersect);
             printf("Ошибка создания Vector intersect_top10!\n");
 
             return NULL;
         }
+
+        vectorFree(intersect);
+        intersect = changed_intersect;
     }
 
     clock_t end = clock();
     clock_t time_delta = end - start;
+    double time_in_seconds = (double)time_delta / CLOCKS_PER_SEC;
 
     Vector *intersect_changed = createVector(sizeof(SearchResult));
     if (intersect_changed == NULL) {
@@ -280,9 +322,11 @@ SearchResults* search(Index* idx, const char* query) {
 
             return NULL;
         }
+
+        free(changed_item);
     }
 
-    SearchResults *search_results = createSearchResults(intersect_changed, total, time_delta);
+    SearchResults *search_results = createSearchResults(intersect_changed, total, time_in_seconds);
     if (search_results == NULL) {
         free(postings_lists);
         vectorFree(intersect);
