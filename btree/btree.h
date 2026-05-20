@@ -26,7 +26,7 @@ void   freeBTreeNode(BTreeNode* node);
 BTreeNode *createBTreeNode(const char* keys, Vector *postings, int is_leaf);
                             
 void    btreeInsert(BTree* tree, const char* key, int doc_id, const char* title);
-Vector* btreeSearch(const BTreeNode *tree, const char* key);
+Vector* btreeSearch(const BTree *tree, const char* key);
 void    btreeTraverse(
     const BTree* tree,
     void (*visit)(const char* key, Vector* postings, void* ctx),

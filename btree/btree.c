@@ -88,6 +88,13 @@ static void splitChild(BTreeNode* parent, int index) {
     }   
     
     child->n = BTREE_MAX_KEYS / 2;
+    parent->keys[index] = child->keys[BTREE_MAX_KEYS / 2];
+    parent->postings[index] = child->postings[BTREE_MAX_KEYS / 2];
+
+    for (int i = BTREE_MAX_KEYS / 2; i < BTREE_MAX_KEYS; i++) {
+        child->keys[i] = NULL;
+        child->postings[i] = NULL;
+    }
 
     for (int i = parent->n; i > index; i--) {
         parent->children[i + 1] = parent->children[i];
@@ -99,8 +106,6 @@ static void splitChild(BTreeNode* parent, int index) {
         parent->postings[i + 1] = parent->postings[i];
     }
 
-    parent->keys[index] = child->keys[BTREE_MAX_KEYS / 2];
-    parent->postings[index] = child->postings[BTREE_MAX_KEYS / 2];
     parent->n += 1;
 }
 
@@ -113,8 +118,8 @@ static void insertNonFull(BTreeNode *node, const char* key, Vector *postings) {
             node->postings[i+1] = node->postings[i];
             i--;
         }
-        node->keys[i+1] = strdup(key);
-        node->postings[i+1] = postings;
+        node->keys[i + 1] = strdup(key);
+        node->postings[i + 1] = postings;
         node->n += 1;
     }
     else {
@@ -165,7 +170,7 @@ void btreeInsert(BTree* tree, const char* key, int doc_id, const char* title) {
     }
 }
 
-Vector* btreeSearch(const BTreeNode* tree, const char* key) {
+static Vector* searchNode(const BTreeNode* tree, const char* key) {
     if (tree == NULL) {
         printf("Tree is NULL...\n");
         return NULL;
@@ -180,7 +185,17 @@ Vector* btreeSearch(const BTreeNode* tree, const char* key) {
         return tree->postings[i];
     }
 
-    return btreeSearch(tree->children[i], key);
+    return searchNode(tree->children[i], key);
+}
+
+Vector* btreeSearch(const BTree* tree, const char* key) {
+    if (tree == NULL) {
+        printf("Tree is NULL...");
+
+        return NULL;
+    }
+
+    return searchNode(tree, key);
 }
 
 static void traverseNode(

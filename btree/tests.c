@@ -83,6 +83,43 @@ void testInsertSplit(void) {
     printf("TestInsertSplit success!\n");
 }
 
+void testInsertOrder(void) {
+    printf("TestInsertOrder...\n");
+    BTree *tree = createBTree();
+    btreeInsert(tree, "ббб", 1, "doc1");
+    btreeInsert(tree, "ааа", 2, "doc2");
+    assert(strcmp(tree->root->keys[0], "ааа") == 0);
+    assert(strcmp(tree->root->keys[1], "ббб") == 0);
+    freeBTree(tree);
+    printf("TestInsertOrder success!\n");
+}
+
+void testInsertOrderReverse(void) {
+    printf("TestInsertOrderReverse...\n");
+    BTree *tree = createBTree();
+    btreeInsert(tree, "ггг", 1, "doc1");
+    btreeInsert(tree, "ввв", 2, "doc2");
+    btreeInsert(tree, "ааа", 3, "doc3");
+    assert(strcmp(tree->root->keys[0], "ааа") == 0);
+    assert(strcmp(tree->root->keys[1], "ввв") == 0);
+    assert(strcmp(tree->root->keys[2], "ггг") == 0);
+    freeBTree(tree);
+    printf("TestInsertOrderReverse success!\n");
+}
+
+void testInsertOrderMixed(void) {
+    printf("TestInsertOrderMixed...\n");
+    BTree *tree = createBTree();
+    btreeInsert(tree, "ввв", 1, "doc1");
+    btreeInsert(tree, "ааа", 2, "doc2");
+    btreeInsert(tree, "ббб", 3, "doc3");
+    assert(strcmp(tree->root->keys[0], "ааа") == 0);
+    assert(strcmp(tree->root->keys[1], "ббб") == 0);
+    assert(strcmp(tree->root->keys[2], "ввв") == 0);
+    freeBTree(tree);
+    printf("TestInsertOrderMixed success!\n");
+}
+
 int main(void) {
     testCreateBTree();
     testCreateBTreeNode();
@@ -91,5 +128,8 @@ int main(void) {
     testSearchExisting();
     testSearchNotExisting();
     testInsertSplit();
+    testInsertOrder();
+    testInsertOrderReverse();
+    testInsertOrderMixed();
     return 0;
 }
