@@ -24,12 +24,12 @@ void freeBTreeNode(BTreeNode *node) {
     }
 
     if (node->is_leaf == 0) {
-        for (int i = 0; i < node->n; i++) {
+        for (int i = 0; i <= node->n; i++) {
             freeBTreeNode(node->children[i]);
         }
     }
 
-    for (int i = 0; i <= node->n; i++) {
+    for (int i = 0; i < node->n; i++) {
         free(node->keys[i]);
         vectorFree(node->postings[i]);
     }
@@ -146,6 +146,14 @@ void btreeInsert(BTree* tree, const char* key, int doc_id, const char* title) {
         return;
     }
 
+    if (tree->root != NULL) {
+        Vector* existing = btreeSearch(tree, key);
+        if (existing != NULL) {
+            appendPosting(existing, doc_id, title);
+            return;
+        }
+    }
+
     Vector *postings = createPostingList();
     appendPosting(postings, doc_id, title);
 
@@ -166,26 +174,30 @@ void btreeInsert(BTree* tree, const char* key, int doc_id, const char* title) {
         }
 
         insertNonFull(tree->root, key, postings);
-        tree->size++;
+        tree->size += 1;
     }
 }
 
-static Vector* searchNode(const BTreeNode* tree, const char* key) {
-    if (tree == NULL) {
-        printf("Tree is NULL...\n");
+static Vector* searchNode(const BTreeNode* node, const char* key) {
+    if (node == NULL) {
+        printf("Node is NULL...\n");
         return NULL;
     }
     int i = 0;
 
-    while(i < tree->n && strcmp(tree->keys[i], key) < 0) {
-        i++;
+    while(i < node->n && strcmp(node->keys[i], key) < 0) {
+        i += 1;
     }
 
-    if (i < tree->n && strcmp(tree->keys[i], key) == 0) {
-        return tree->postings[i];
+    if (i < node->n && strcmp(node->keys[i], key) == 0) {
+        return node->postings[i];
     }
 
-    return searchNode(tree->children[i], key);
+    if (node->is_leaf) {
+        return NULL;
+    }
+
+    return searchNode(node->children[i], key);
 }
 
 Vector* btreeSearch(const BTree* tree, const char* key) {
@@ -195,7 +207,7 @@ Vector* btreeSearch(const BTree* tree, const char* key) {
         return NULL;
     }
 
-    return searchNode(tree, key);
+    return searchNode(tree->root, key);
 }
 
 static void traverseNode(
