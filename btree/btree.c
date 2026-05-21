@@ -140,6 +140,24 @@ static void insertNonFull(BTreeNode *node, const char* key, Vector *postings) {
     }
 }
 
+static int findKeyIndex(const BTreeNode *node, const char *key) {
+    int left = 0;
+    int right = node->n;
+
+    while (left < right) {
+        int mid = left + (right - left) / 2;
+
+        if (strcmp(node->keys[mid], key) < 0) {
+            left = mid + 1;
+        }
+        else {
+            right = mid;
+        }
+    }
+
+    return left;
+}
+
 void btreeInsert(BTree* tree, const char* key, int doc_id, const char* title) {
     if (tree == NULL) {
         printf("Tree is NULL\n");
@@ -183,11 +201,7 @@ static Vector* searchNode(const BTreeNode* node, const char* key) {
         printf("Node is NULL...\n");
         return NULL;
     }
-    int i = 0;
-
-    while(i < node->n && strcmp(node->keys[i], key) < 0) {
-        i += 1;
-    }
+    int i = findKeyIndex(node, key);
 
     if (i < node->n && strcmp(node->keys[i], key) == 0) {
         return node->postings[i];
