@@ -118,7 +118,9 @@ Vector* intersectPostings(Vector** lists, int n) {
             return NULL;
         }
 
+        vectorFree(curr_list);
         vectorFree(previous_intersect);
+
         previous_intersect = curr_intersect;
     }
 
@@ -264,8 +266,9 @@ SearchResults* search(Index* idx, const char* query) {
         return NULL;
     }
 
-    int total = intersect->size;
+    free(postings_lists);
 
+    int total = intersect->size;
     if (intersect->size > 10) {
         Vector *changed_intersect = createIntersectTop10(intersect);
         if (changed_intersect == NULL) {
@@ -282,7 +285,7 @@ SearchResults* search(Index* idx, const char* query) {
 
     clock_t end = clock();
     clock_t time_delta = end - start;
-    double time_in_seconds = (double)time_delta / CLOCKS_PER_SEC;
+    double time_in_ms = (double)time_delta / CLOCKS_PER_SEC * 1000;
 
     Vector *intersect_changed = createVector(sizeof(SearchResult));
     if (intersect_changed == NULL) {
@@ -326,7 +329,7 @@ SearchResults* search(Index* idx, const char* query) {
         free(changed_item);
     }
 
-    SearchResults *search_results = createSearchResults(intersect_changed, total, time_in_seconds);
+    SearchResults *search_results = createSearchResults(intersect_changed, total, time_in_ms);
     if (search_results == NULL) {
         free(postings_lists);
         vectorFree(intersect);
@@ -397,7 +400,6 @@ void printResultsJSON(const SearchResults* sr) {
         return;
     }
 
-    // 6. Записываем строку в файл
     FILE *file = fopen(filename, "w");
     if (!file) {
         cJSON_free(json_string);
@@ -408,7 +410,6 @@ void printResultsJSON(const SearchResults* sr) {
     fputs(json_string, file);
     fclose(file);
 
-    // 7. Освобождаем выделенную память cJSON
     cJSON_free(json_string);
     cJSON_Delete(root);
 }
