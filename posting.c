@@ -9,8 +9,13 @@ void appendPosting(Vector* list, int doc_id, const char* title) {
     if (!list) return;
     PostingEntry entry;
     entry.doc_id = doc_id;
-    strncpy(entry.title, title, MAX_TITLE_LEN - 1);
-    entry.title[MAX_TITLE_LEN - 1] = '\0';
+    if (title != NULL) {
+        strncpy(entry.title, title, MAX_TITLE_LEN - 1);
+        entry.title[MAX_TITLE_LEN - 1] = '\0';
+    }
+    else {
+        entry.title[0] = '\0';
+    }
     appendVectorItem(list, &entry);
 }
 

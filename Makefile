@@ -17,8 +17,8 @@ test_avl: posting.o avl/avl.o avl/tests.o
 test_rb: posting.o rbtree/rbtree.o rbtree/tests.o
 	$(CC) $(CFLAGS) -o test_rb posting.o rbtree/rbtree.o rbtree/tests.o
 
-test_btree: posting.o btree/btree.o btree/tests.o
-	$(CC) $(CFLAGS) -o test_btree posting.o btree/btree.o btree/tests.o
+test_btree: posting.o vector/generic.o btree/btree.o btree/tests.o
+	$(CC) $(CFLAGS) -o test_btree posting.o vector/generic.o btree/btree.o btree/tests.o
 
 u_tests: test_avl test_rb test_btree
 	./test_avl
