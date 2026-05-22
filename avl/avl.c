@@ -169,24 +169,6 @@ static AVLNode* bigRotateRight(AVLNode* node)
     return rotateRight(node);
 }
 
-static void addPosting(AVLNode* node, int doc_id, const char* title)
-{
-    if (node == NULL || node->postings == NULL) {
-        return;
-    }
-
-    for (size_t i = 0; i < node->postings->size; i++) {
-        PostingEntry* entry = getVectorItem(node->postings, i);
-        if (entry && entry->doc_id == doc_id) {
-            strncpy(entry->title, title, MAX_TITLE_LEN - 1);
-            entry->title[MAX_TITLE_LEN - 1] = '\0';
-            return;
-        }
-    }
-
-    appendPosting(node->postings, doc_id, title);
-}
-
 static AVLNode* insertNode(AVLNode* node, const char* key, int doc_id, const char* title, int* created)
 {
     if (node == NULL) {
@@ -200,9 +182,6 @@ static AVLNode* insertNode(AVLNode* node, const char* key, int doc_id, const cha
         node->left = insertNode(node->left, key, doc_id, title, created);
     } else if (cmp > 0) {
         node->right = insertNode(node->right, key, doc_id, title, created);
-    } else {
-        addPosting(node, doc_id, title);
-        return node;
     }
     
     node->height = 1 + max(height(node->left), height(node->right));
@@ -233,6 +212,21 @@ void avlInsert(AVLTree* tree, const char* key, int doc_id, const char* title)
         return;
     }
     
+    Vector* postings = avlSearch(tree, key);
+    
+    if (postings != NULL) {
+        for (size_t i = 0; i < postings->size; i++) {
+            PostingEntry* entry = getVectorItem(postings, i);
+            if (entry && entry->doc_id == doc_id) {
+                strncpy(entry->title, title, MAX_TITLE_LEN - 1);
+                entry->title[MAX_TITLE_LEN - 1] = '\0';
+                return;
+            }
+        }
+        appendPosting(postings, doc_id, title);
+        return;
+    }
+
     int created = 0;
     tree->root = insertNode(tree->root, key, doc_id, title, &created);
     
