@@ -16,6 +16,7 @@ typedef struct {
 } AVLTree;
 
 AVLTree* createAVLTree(void);
+AVLNode* createAVLNode(const char* key, int doc_id, const char* title);
 void     freeAVLTree(AVLTree* tree);
 
 void    avlInsert(AVLTree* tree, const char* key, int doc_id, const char* title);
