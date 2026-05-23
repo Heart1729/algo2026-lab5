@@ -1,12 +1,15 @@
 CC     = gcc
 CFLAGS = -Wall -Wextra -std=c11 -O2 -g
 
+OBJ_SHARED = posting.o vector/generic.o avl/avl.o rbtree/rbtree.o btree/btree.o \
+             index/index.o index/search.o index/cJSON.o
+
 .PHONY: all app u_tests test clean
 
 all: app u_tests
 
-app: main.o
-	$(CC) $(CFLAGS) -o app main.o
+app: $(OBJ_SHARED) main.o
+	$(CC) $(CFLAGS) -o app $(OBJ_SHARED) main.o
 
 test_avl: posting.o avl/avl.o avl/tests.o
 	$(CC) $(CFLAGS) -o test_avl posting.o avl/avl.o avl/tests.o
