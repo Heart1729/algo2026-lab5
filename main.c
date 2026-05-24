@@ -3,20 +3,77 @@
 #include <string.h>
 #include <time.h>
 #include "index/index.h"
-#include "index/search.h"
 
+static const char* typeName(TreeType type) {
+    switch (type) {
+        case TREE_AVL:
+            return "avl";
+        case TREE_RB:
+            return "rb";
+        case TREE_BTREE:
+            return "btree";
+        default:
+            return "avl";
+    }
+}
+
+static TreeType parseType(const char* value) {
+    if (strcmp(value, "rb") == 0) {
+        return TREE_RB;
+    }
+    if (strcmp(value, "btree") == 0) {
+        return TREE_BTREE;
+    }
+    return TREE_AVL;
+}
+
+static void printJsonString(const char* value) {
+    putchar('"');
+    for (const char* p = value; *p != '\0'; p++) {
+        if (*p == '"' || *p == '\\') {
+            putchar('\\');
+        }
+        putchar(*p);
+    }
+    putchar('"');
+}
+
+static void runIndex(TreeType type, const char* data_path, const char* idx_path) {
+    // файл заглушка
+    FILE* file = fopen(idx_path, "w");
+    if (!file) {
+        fprintf(stderr, "Failed to create placeholder index: %s\n", idx_path);
+        exit(1);
+    }
+
+    fprintf(file, "# Placeholder index\n");
+    fprintf(file, "type=%s\n", typeName(type));
+    fprintf(file, "data=%s\n", data_path);
+    fclose(file);
+
+    printf("placeholder %s index № %s\n", typeName(type), idx_path);
+}
 
 static void runSearch(TreeType type, const char* idx_path,
                       const char* query, int json_out) {
-    // Index* idx = loadIndex(idx_path, type);
-    // if (!idx) { fprintf(stderr, "Failed to load index: %s\n", idx_path); exit(1); }
+    if (json_out) {
+        printf("{\"total\":1,\"time_ms\":0.0,\"results\":[");
+        printf("{\"doc_id\":0,\"title\":");
+        printJsonString("демо, имплементация сюды");
+        printf(",\"score\":0,\"tree\":");
+        printJsonString(typeName(type));
+        printf(",\"query\":");
+        printJsonString(query);
+        printf(",\"index\":");
+        printJsonString(idx_path);
+        printf("}]}");
+        return;
+    }
 
-    // SearchResults* sr = search(idx, query);
-    // if (json_out) printResultsJSON(sr);
-    // else          printResultsText(sr);
-
-    // freeSearchResults(sr);
-    // freeIndex(idx);
+    printf("demo.\n");
+    printf("Tree: %s\n", typeName(type));
+    printf("Index: %s\n", idx_path);
+    printf("Query: %s\n", query);
 }
 
 static void usage(const char* prog) {
