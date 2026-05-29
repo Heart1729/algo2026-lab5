@@ -367,12 +367,10 @@ void printResultsText(const SearchResults* sr) {
 }
 
 void printResultsJSON(const SearchResults* sr) {
-    const char *filename = "search_results.json";
+    if (!sr) return;
 
     cJSON *root = cJSON_CreateObject();
-    if (!root) {
-        return;
-    }
+    if (!root) return;
 
     cJSON_AddNumberToObject(root, "time_ms", sr->time_ms);
     cJSON_AddNumberToObject(root, "total", sr->total);
@@ -382,19 +380,17 @@ void printResultsJSON(const SearchResults* sr) {
         cJSON_Delete(root);
         return;
     }
-    cJSON_AddItemToObject(root, "documents", documents_array);
+
+    // ИСПРАВЛЕНИЕ 1: Называем ключ "results", как того ждет app.py
+    cJSON_AddItemToObject(root, "results", documents_array);
 
     size_t count = sr->results->size;
     for (size_t i = 0; i < count; i++) {
         SearchResult* item = getVectorItem(sr->results, i);
-        if (!item) {
-            continue;
-        }
+        if (!item) continue;
 
         cJSON *doc_obj = cJSON_CreateObject();
-        if (!doc_obj) {
-            continue;
-        }
+        if (!doc_obj) continue;
 
         cJSON_AddNumberToObject(doc_obj, "doc_id", item->doc_id);
         cJSON_AddStringToObject(doc_obj, "title", item->title);
@@ -403,22 +399,15 @@ void printResultsJSON(const SearchResults* sr) {
         cJSON_AddItemToArray(documents_array, doc_obj);
     }
 
-    // 5. Генерируем JSON-строку с форматированием (отступами)
     char *json_string = cJSON_Print(root);
     if (!json_string) {
         cJSON_Delete(root);
         return;
     }
 
-    FILE *file = fopen(filename, "w");
-    if (!file) {
-        cJSON_free(json_string);
-        cJSON_Delete(root);
-        return;
-    }
-
-    fputs(json_string, file);
-    fclose(file);
+    // ИСПРАВЛЕНИЕ 2: Печатаем прямо в stdout, чтобы Streamlit мог это прочитать
+    printf("%s\n", json_string);
+    fflush(stdout); // Принудительно выталкиваем буфер вывода
 
     cJSON_free(json_string);
     cJSON_Delete(root);
