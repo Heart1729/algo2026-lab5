@@ -3,6 +3,8 @@
 #include "index.h"
 #include "../vector/generic.h"
 
+#define MAX_TITLE_LEN 256
+
 typedef struct {
     int  doc_id;
     char title[MAX_TITLE_LEN];
@@ -23,6 +25,6 @@ static SearchResult* createSearchResult(int doc_id, char *title, int score);
 static int countWords(const char *str);
 static Vector *createIntersectTop10(Vector *intersect);
 SearchResults* search(Index* idx, const char* query);
-void           printResultsText(const SearchResults* sr);
-void           printResultsJSON(const SearchResults* sr);
+void printResultsText(const SearchResults* sr);
+void printResultsJSON(const SearchResults* sr);
 void           freeSearchResults(SearchResults* sr);

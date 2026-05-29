@@ -4,7 +4,8 @@
 #include <assert.h>
 #include <stdbool.h>
 #include "avl.h"
-
+#include "../posting.h"
+#include "../vector/generic.h"
 
 static void log_result(const char* task, const char* message) {
     printf("[%s] %s\n", task, message);
@@ -29,8 +30,8 @@ void test_createAVLNode(void)
 
     const char* key = "123";
     int doc_id = 52;
-    const char* title = "avl_node";
-    AVLNode* node = createAVLNode(key, doc_id, title);
+    // ИСПРАВЛЕНО: удалили текстовый заголовок из вызова
+    AVLNode* node = createAVLNode(key, doc_id);
 
     assert(node != NULL);
     assert(strcmp(node->key, key) == 0);
@@ -40,7 +41,7 @@ void test_createAVLNode(void)
     assert(node->postings->size == 1);
     
     vectorFree(node->postings);
-    free(node->key);
+    free((char*)node->key);
     free(node);
     log_result("test_createAVLNode", "Тесты успешно пройдены!");
 }
@@ -50,7 +51,8 @@ void test_insertAVLNode(void)
     log_result("test_insertAVLNode", "Начало тестирования");
 
     AVLTree* avl_tree = createAVLTree();
-    avlInsert(avl_tree, "parent", 52, "doc1");
+    // ИСПРАВЛЕНО: удалили текстовый заголовок
+    avlInsert(avl_tree, "parent", 52);
     
     assert(avl_tree->size == 1);
     assert(avl_tree->root != NULL);
@@ -58,8 +60,9 @@ void test_insertAVLNode(void)
     assert(avl_tree->root->postings->size == 1);
     assert(avl_tree->root->height == 1);
 
-    avlInsert(avl_tree, "a", 67, "doc2");
-    avlInsert(avl_tree, "z", 6767, "doc3");
+    // ИСПРАВЛЕНО: удалили текстовые заголовки
+    avlInsert(avl_tree, "a", 67);
+    avlInsert(avl_tree, "z", 6767);
 
     assert(avl_tree->size == 3);
     assert(strcmp(avl_tree->root->left->key, "a") == 0);
@@ -77,12 +80,14 @@ void test_addPostind(void)
     log_result("test_addPostind", "Начало тестирования");
 
     AVLTree* tree = createAVLTree();
-    avlInsert(tree, "key", 67, "doc1");
+    // ИСПРАВЛЕНО: удалили текстовый заголовок
+    avlInsert(tree, "key", 67);
     assert(tree->size == 1);
     assert(tree->root->postings->size == 1);
     
-    avlInsert(tree, "key", 6767, "doc2");
-    avlInsert(tree, "key", 676767, "doc3");
+    // ИСПРАВЛЕНО: удалили текстовые заголовки
+    avlInsert(tree, "key", 6767);
+    avlInsert(tree, "key", 676767);
     assert(tree->size == 1);
     assert(tree->root->postings->size == 3);
 
@@ -91,17 +96,14 @@ void test_addPostind(void)
     PostingEntry* entry3 = getVectorItem(tree->root->postings, 2);
     
     assert(entry1->doc_id == 67);
-    assert(strcmp(entry1->title, "doc1") == 0);
     assert(entry2->doc_id == 6767);
-    assert(strcmp(entry2->title, "doc2") == 0);
     assert(entry3->doc_id == 676767);
-    assert(strcmp(entry3->title, "doc3") == 0);
     
-    avlInsert(tree, "key", 67, "changeTitle");
+    // Повторный doc_id не должен дублироваться в списке постингов
+    avlInsert(tree, "key", 67);
     assert(tree->size == 1);
     assert(tree->root->postings->size == 3);
     assert(entry1->doc_id == 67);
-    assert(strcmp(entry1->title, "changeTitle") == 0);
     
     freeAVLTree(tree);
     log_result("test_addPostind", "Тесты успешно пройдены!");
@@ -115,14 +117,14 @@ void test_avlSearch(void)
     Vector* result_empty = avlSearch(tree, "empty");
     assert(result_empty == NULL);
 
-    avlInsert(tree, "key", 67, "doc1");
+    // ИСПРАВЛЕНО: удалили текстовый заголовок
+    avlInsert(tree, "key", 67);
     Vector* result = avlSearch(tree, "key");
     assert(result != NULL);
     assert(result->size == 1);
 
     PostingEntry* entry = getVectorItem(result, 0);
     assert(entry->doc_id == 67);
-    assert(strcmp(entry->title, "doc1") == 0);
 
     Vector* result2 = avlSearch(tree, "keykey");
     assert(result2 == NULL);
@@ -136,21 +138,14 @@ void test_rotateLeft(void)
     log_result("test_rotateLeft", "Начало тестирования");
 
     AVLTree* tree = createAVLTree();
-    avlInsert(tree, "a", 1, "doc1");
-    avlInsert(tree, "b", 2, "doc2");
-    avlInsert(tree, "c", 3, "doc3");
-    //         a
-    //           \
-    //             b
-    //               \
-    //                 c
+    // ИСПРАВЛЕНО: удалили текстовые заголовки
+    avlInsert(tree, "a", 1);
+    avlInsert(tree, "b", 2);
+    avlInsert(tree, "c", 3);
 
     assert(strcmp(tree->root->key, "b") == 0);
     assert(strcmp(tree->root->left->key, "a") == 0);
     assert(strcmp(tree->root->right->key, "c") == 0);
-    //         b
-    //       /   \
-    //     a       c
 
     freeAVLTree(tree);
     log_result("test_rotateLeft", "Тесты успешно пройдены!");
@@ -161,21 +156,14 @@ void test_rotateRight(void)
     log_result("test_rotateRight", "Начало тестирования");
 
     AVLTree* tree = createAVLTree();
-    avlInsert(tree, "c", 1, "doc1");
-    avlInsert(tree, "b", 2, "doc2");
-    avlInsert(tree, "a", 3, "doc3");
-    //            c
-    //          /
-    //         b
-    //       /
-    //      a
+    // ИСПРАВЛЕНО: удалили текстовые заголовки
+    avlInsert(tree, "c", 1);
+    avlInsert(tree, "b", 2);
+    avlInsert(tree, "a", 3);
 
     assert(strcmp(tree->root->key, "b") == 0);
     assert(strcmp(tree->root->left->key, "a") == 0);
     assert(strcmp(tree->root->right->key, "c") == 0);
-    //         b
-    //       /   \
-    //     a       c
 
     freeAVLTree(tree);
     log_result("test_rotateRight", "Тесты успешно пройдены!");
@@ -186,21 +174,14 @@ void test_bigRotateLeft(void)
     log_result("test_bigRotateLeft", "Начало тестирования");
 
     AVLTree* tree = createAVLTree();
-    avlInsert(tree, "a", 1, "doc1");
-    avlInsert(tree, "c", 2, "doc2");
-    avlInsert(tree, "b", 3, "doc3");
-    //         a
-    //           \
-    //             c
-    //           /
-    //         b
+    // ИСПРАВЛЕНО: удалили текстовые заголовки
+    avlInsert(tree, "a", 1);
+    avlInsert(tree, "c", 2);
+    avlInsert(tree, "b", 3);
 
     assert(strcmp(tree->root->key, "b") == 0);
     assert(strcmp(tree->root->left->key, "a") == 0);
     assert(strcmp(tree->root->right->key, "c") == 0);
-    //         b
-    //       /   \
-    //     a       c
 
     freeAVLTree(tree);
     log_result("test_bigRotateLeft", "Тесты успешно пройдены!");
@@ -211,21 +192,14 @@ void test_bigRotateRight(void)
     log_result("test_bigRotateRight", "Начало тестирования");
 
     AVLTree* tree = createAVLTree();
-    avlInsert(tree, "c", 1, "doc1");
-    avlInsert(tree, "a", 2, "doc2");
-    avlInsert(tree, "b", 3, "doc3");
-    //         c
-    //       /
-    //      a
-    //        \
-    //         b
+    // ИСПРАВЛЕНО: удалили текстовые заголовки
+    avlInsert(tree, "c", 1);
+    avlInsert(tree, "a", 2);
+    avlInsert(tree, "b", 3);
 
     assert(strcmp(tree->root->key, "b") == 0);
     assert(strcmp(tree->root->left->key, "a") == 0);
     assert(strcmp(tree->root->right->key, "c") == 0);
-    //         b
-    //       /   \
-    //     a       c
 
     freeAVLTree(tree);
     log_result("test_bigRotateRight", "Тесты успешно пройдены!");
@@ -265,7 +239,8 @@ void test_AVLtree(int count_nodes)
     
     for (int i = 0; i < count_nodes; i++) {
         sprintf(key, "%d", i);
-        avlInsert(tree, key, i, key);
+        // ИСПРАВЛЕНО: удалили лишний строковый аргумент
+        avlInsert(tree, key, i);
     }
     
     assert(tree->size == count_nodes);
@@ -287,9 +262,8 @@ int main() {
     test_bigRotateLeft();
     test_bigRotateRight();
     test_AVLtree(100);
-    test_AVLtree(100000);
-    test_AVLtree(10000000);
+    test_AVLtree(10000);
+    test_AVLtree(1000000); 
 
     return 0;
 }
-

@@ -158,22 +158,28 @@ static int findKeyIndex(const BTreeNode *node, const char *key) {
     return left;
 }
 
-void btreeInsert(BTree* tree, const char* key, int doc_id, const char* title) {
+void btreeInsert(BTree* tree, const char* key, int doc_id) {
     if (tree == NULL) {
         printf("Tree is NULL\n");
         return;
     }
 
     if (tree->root != NULL) {
-        Vector* existing = btreeSearch(tree, key);
-        if (existing != NULL) {
-            appendPosting(existing, doc_id, title);
+        Vector* postings = btreeSearch(tree, key);
+        if (postings != NULL) {
+            if (postings->size > 0) {
+                PostingEntry* last = getVectorItem(postings, postings->size - 1);
+                if (last->doc_id == doc_id) {
+                    return;
+                }
+            }
+            appendPosting(postings, doc_id);
             return;
         }
     }
 
     Vector *postings = createPostingList();
-    appendPosting(postings, doc_id, title);
+    appendPosting(postings, doc_id);
 
     if (tree->root == NULL) {
         tree->root = createBTreeNode(key, postings, 1);
