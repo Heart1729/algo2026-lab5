@@ -186,6 +186,12 @@ void rbInsert(RBTree* tree, const char* key, int doc_id) {
 
     Vector* found = rbSearch(tree, key);
     if (found != NULL) {
+        if (found->size > 0) {
+            PostingEntry* last = getVectorItem(found, found->size - 1);
+            if (last->doc_id == doc_id) {
+                return;
+            }
+        }
         appendPosting(found, doc_id);
         return;
     }
