@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -85,15 +86,6 @@ static void splitChild(BTreeNode* parent, int index) {
         for (int i = 0; i < BTREE_MAX_CH / 2; i++) {
             newNode->children[i] = child->children[i + BTREE_MAX_CH/ 2];
         }
-    }   
-    
-    child->n = BTREE_MAX_KEYS / 2;
-    parent->keys[index] = child->keys[BTREE_MAX_KEYS / 2];
-    parent->postings[index] = child->postings[BTREE_MAX_KEYS / 2];
-
-    for (int i = BTREE_MAX_KEYS / 2; i < BTREE_MAX_KEYS; i++) {
-        child->keys[i] = NULL;
-        child->postings[i] = NULL;
     }
 
     for (int i = parent->n; i > index; i--) {
@@ -106,6 +98,15 @@ static void splitChild(BTreeNode* parent, int index) {
         parent->postings[i + 1] = parent->postings[i];
     }
 
+    parent->keys[index] = child->keys[BTREE_MAX_KEYS / 2];
+    parent->postings[index] = child->postings[BTREE_MAX_KEYS / 2];
+
+    for (int i = BTREE_MAX_KEYS / 2; i < BTREE_MAX_KEYS; i++) {
+        child->keys[i] = NULL;
+        child->postings[i] = NULL;
+    }
+
+    child->n = BTREE_MAX_KEYS / 2;
     parent->n += 1;
 }
 

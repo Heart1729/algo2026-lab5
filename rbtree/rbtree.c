@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include "rbtree.h"
 #include "../vector/generic.h"
 #include <stdlib.h>
