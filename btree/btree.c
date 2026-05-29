@@ -165,9 +165,15 @@ void btreeInsert(BTree* tree, const char* key, int doc_id) {
     }
 
     if (tree->root != NULL) {
-        Vector* existing = btreeSearch(tree, key);
-        if (existing != NULL) {
-            appendPosting(existing, doc_id);
+        Vector* postings = btreeSearch(tree, key);
+        if (postings != NULL) {
+            if (postings->size > 0) {
+                PostingEntry* last = getVectorItem(postings, postings->size - 1);
+                if (last->doc_id == doc_id) {
+                    return;
+                }
+            }
+            appendPosting(postings, doc_id);
             return;
         }
     }
