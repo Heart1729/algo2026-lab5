@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include "../vector/generic.h"
 #include "index.h"
 #include "../posting.h"
@@ -11,6 +12,11 @@
 
 // Попарное пересечение векторов из PostingEntry
 static Vector *pairwiseIntersect(Vector *list1, Vector *list2) {
+
+    if (list1 == NULL || list2 == NULL) {
+        return NULL;
+    }
+
     Vector *intersect = createVector(sizeof(PostingEntry));
     if (intersect == NULL) {
         return NULL;
