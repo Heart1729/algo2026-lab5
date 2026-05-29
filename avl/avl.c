@@ -214,12 +214,13 @@ void avlInsert(AVLTree* tree, const char* key, int doc_id)
 
     Vector* postings = avlSearch(tree, key);
     if (postings != NULL) {
-        for (size_t i = 0; i < postings->size; i++) {
-            PostingEntry* entry = getVectorItem(postings, i);
-            if (entry && entry->doc_id == doc_id) {
+        if (postings->size > 0) {
+            PostingEntry* last = getVectorItem(postings, postings->size - 1);
+            if (last && last->doc_id == doc_id) {
                 return;
             }
         }
+        
         appendPosting(postings, doc_id);
         return;
     }
