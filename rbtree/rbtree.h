@@ -23,7 +23,7 @@ typedef struct {
 RBTree* createRBTree(void);
 void    freeRBTree(RBTree* tree);
 
-void    rbInsert(RBTree* tree, const char* key, int doc_id, const char* title);
+void    rbInsert(RBTree* tree, const char* key, int doc_id);
 Vector* rbSearch(const RBTree* tree, const char* key);
 void    rbTraverse(
     const RBTree* tree,

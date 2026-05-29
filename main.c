@@ -38,44 +38,6 @@ static void printJsonString(const char* value) {
     putchar('"');
 }
 
-static void runIndex(TreeType type, const char* data_path, const char* idx_path) {
-    // файл заглушка
-    FILE* file = fopen(idx_path, "w");
-    if (!file) {
-        fprintf(stderr, "Failed to create placeholder index: %s\n", idx_path);
-        exit(1);
-    }
-
-    fprintf(file, "# Placeholder index\n");
-    fprintf(file, "type=%s\n", typeName(type));
-    fprintf(file, "data=%s\n", data_path);
-    fclose(file);
-
-    printf("placeholder %s index № %s\n", typeName(type), idx_path);
-}
-
-static void runSearch(TreeType type, const char* idx_path,
-                      const char* query, int json_out) {
-    if (json_out) {
-        printf("{\"total\":1,\"time_ms\":0.0,\"results\":[");
-        printf("{\"doc_id\":0,\"title\":");
-        printJsonString("демо, имплементация сюды");
-        printf(",\"score\":0,\"tree\":");
-        printJsonString(typeName(type));
-        printf(",\"query\":");
-        printJsonString(query);
-        printf(",\"index\":");
-        printJsonString(idx_path);
-        printf("}]}");
-        return;
-    }
-
-    printf("demo.\n");
-    printf("Tree: %s\n", typeName(type));
-    printf("Index: %s\n", idx_path);
-    printf("Query: %s\n", query);
-}
-
 static void usage(const char* prog) {
     fprintf(stderr,
         "Usage:\n"
@@ -84,7 +46,7 @@ static void usage(const char* prog) {
         prog, prog);
 }
 
-int main(int argc, char* argv[]) { // пример)
+int main(int argc, char* argv[]) {
     if (argc < 3) { usage(argv[0]); return 1; }
 
     const char* mode = argv[1];

@@ -182,11 +182,11 @@ static void RBInsertFixup(RBTree* tree, RBNode* node) {
     tree->root->color = RB_BLACK;
 }
 
-void rbInsert(RBTree* tree, const char* key, int doc_id, const char* title) {
+void rbInsert(RBTree* tree, const char* key, int doc_id) {
 
     Vector* found = rbSearch(tree, key);
     if (found != NULL) {
-        appendPosting(found, doc_id, title);
+        appendPosting(found, doc_id);
         return;
     }
 
@@ -216,7 +216,7 @@ void rbInsert(RBTree* tree, const char* key, int doc_id, const char* title) {
         return;
     }
 
-    appendPosting(posting_list, doc_id, title);
+    appendPosting(posting_list, doc_id);
     new_node->postings = posting_list;
 
 

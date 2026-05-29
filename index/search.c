@@ -251,7 +251,6 @@ SearchResults* search(Index* idx, const char* query) {
             }
         }
 
-        // !! Возможно стоит создать копию postings и хранить ее !!
         postings_lists[i] = postings;
 
         token = strtok(NULL, delimeter);
@@ -273,7 +272,6 @@ SearchResults* search(Index* idx, const char* query) {
     if (intersect->size > 10) {
         Vector *changed_intersect = createIntersectTop10(intersect);
         if (changed_intersect == NULL) {
-            free(postings_lists);
             vectorFree(intersect);
             printf("Ошибка создания Vector intersect_top10!\n");
 
@@ -296,39 +294,44 @@ SearchResults* search(Index* idx, const char* query) {
         return NULL;
     }
 
-    for (int i = 0; i < intersect->size; i++) {
+        for (int i = 0; i < intersect->size; i++) {
         PostingEntry *curr_item = getVectorItem(intersect, i);
         if (curr_item == NULL) {
             printf("Ошибка нахождения элемента в Vector intersect!\n");
             vectorFree(intersect_changed);
-            free(postings_lists);
             vectorFree(intersect);
-
             return NULL;
         }
 
-        int score = 1;
-        SearchResult *changed_item = createSearchResult(curr_item->doc_id, curr_item->title, score);
+        void* res_ptr = getItemHashTable(idx->names, &(curr_item->doc_id), HashInt, intEquals);
+        
+        const char* real_title;
+        if (res_ptr != NULL) {
+            real_title = (const char*)res_ptr;
+        } else {
+            real_title = "Title not found in Document Store";
+        }
+
+        int score = n; 
+
+        SearchResult *changed_item = createSearchResult(curr_item->doc_id, (char*)real_title, score);
         if (changed_item == NULL) {
             vectorFree(intersect_changed);
-            free(postings_lists);
             vectorFree(intersect);
-
             return NULL;
         }
 
         if (appendVectorItem(intersect_changed, changed_item) != 0) {
             printf("Ошибка добавления элемента в Vector intersect_changed!\n");
             vectorFree(intersect_changed);
-            free(postings_lists);
             vectorFree(intersect);
             free(changed_item);
-
             return NULL;
         }
 
         free(changed_item);
     }
+
 
     SearchResults *search_results = createSearchResults(intersect_changed, total, time_in_ms);
     if (search_results == NULL) {

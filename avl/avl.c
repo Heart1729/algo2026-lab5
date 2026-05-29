@@ -43,7 +43,7 @@ AVLTree* createAVLTree(void)
     return avl_tree;
 }
 
-AVLNode* createAVLNode(const char* key, int doc_id, const char* title)
+AVLNode* createAVLNode(const char* key, int doc_id)
 {
     if (key == NULL) {
         return NULL;
@@ -74,7 +74,7 @@ AVLNode* createAVLNode(const char* key, int doc_id, const char* title)
 
     node->left = NULL;
     node->right = NULL;
-    appendPosting(node->postings, doc_id, title);
+    appendPosting(node->postings, doc_id);
 
     return node;
 }
@@ -169,19 +169,19 @@ static AVLNode* bigRotateRight(AVLNode* node)
     return rotateRight(node);
 }
 
-static AVLNode* insertNode(AVLNode* node, const char* key, int doc_id, const char* title, int* created)
+static AVLNode* insertNode(AVLNode* node, const char* key, int doc_id, int* created)
 {
     if (node == NULL) {
         *created = 1;
-        return createAVLNode(key, doc_id, title);
+        return createAVLNode(key, doc_id); 
     }
     
     int cmp = strcmp(key, node->key);
-    
+
     if (cmp < 0) {
-        node->left = insertNode(node->left, key, doc_id, title, created);
+        node->left = insertNode(node->left, key, doc_id, created);
     } else if (cmp > 0) {
-        node->right = insertNode(node->right, key, doc_id, title, created);
+        node->right = insertNode(node->right, key, doc_id, created);
     }
     
     node->height = 1 + max(height(node->left), height(node->right));
@@ -206,9 +206,9 @@ static AVLNode* insertNode(AVLNode* node, const char* key, int doc_id, const cha
     return node;
 }
 
-void avlInsert(AVLTree* tree, const char* key, int doc_id, const char* title)
+void avlInsert(AVLTree* tree, const char* key, int doc_id)
 {
-    if (tree == NULL || key == NULL || title == NULL) {
+    if (tree == NULL || key == NULL) {
         return;
     }
 
@@ -217,17 +217,15 @@ void avlInsert(AVLTree* tree, const char* key, int doc_id, const char* title)
         for (size_t i = 0; i < postings->size; i++) {
             PostingEntry* entry = getVectorItem(postings, i);
             if (entry && entry->doc_id == doc_id) {
-                strncpy(entry->title, title, MAX_TITLE_LEN - 1);
-                entry->title[MAX_TITLE_LEN - 1] = '\0';
                 return;
             }
         }
-        appendPosting(postings, doc_id, title);
+        appendPosting(postings, doc_id);
         return;
     }
 
     int created = 0;
-    tree->root = insertNode(tree->root, key, doc_id, title, &created);
+    tree->root = insertNode(tree->root, key, doc_id, &created);
     
     if (created) {
         tree->size++;

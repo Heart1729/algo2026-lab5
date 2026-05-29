@@ -17,8 +17,8 @@ typedef struct {
 
 AVLTree* createAVLTree(void);
 void     freeAVLTree(AVLTree* tree);
-AVLNode* createAVLNode(const char* key, int doc_id, const char* title);
-void    avlInsert(AVLTree* tree, const char* key, int doc_id, const char* title);
+AVLNode* createAVLNode(const char* key, int doc_id);
+void    avlInsert(AVLTree* tree, const char* key, int doc_id);
 Vector* avlSearch(const AVLTree* tree, const char* key);
 void    avlTraverse(
     const AVLTree* tree,

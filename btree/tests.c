@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "../posting.h"
+#include "../vector/generic.h"
 
 void testCreateBTree(void) {
     printf("TestCreateBTree...\n");
@@ -17,7 +19,8 @@ void testCreateBTree(void) {
 void testCreateBTreeNode(void) {
     printf("TestCreateBTreeNode...\n");
     Vector *postings = createPostingList();
-    appendPosting(postings, 1, "Матан");
+    // ИСПРАВЛЕНО: удалили текстовый заголовок
+    appendPosting(postings, 1);
     BTreeNode *node = createBTreeNode("кот", postings, 1);
     assert(node != NULL);
     assert(strcmp(node->keys[0], "кот") == 0);
@@ -30,7 +33,8 @@ void testCreateBTreeNode(void) {
 void testInsertSingle(void) {
     printf("TestInsertSingle...\n");
     BTree *tree = createBTree();
-    btreeInsert(tree, "кот", 1, "Матан");
+    // ИСПРАВЛЕНО: удалили текстовый заголовок
+    btreeInsert(tree, "кот", 1);
     assert(tree->root != NULL);
     assert(tree->size == 1);
     assert(strcmp(tree->root->keys[0], "кот") == 0);
@@ -41,9 +45,10 @@ void testInsertSingle(void) {
 void testInsertMultiple(void) {
     printf("TestInsertMultiple...\n");
     BTree *tree = createBTree();
-    btreeInsert(tree, "кот", 1, "Матан");
-    btreeInsert(tree, "бобёр", 2, "Линал");
-    btreeInsert(tree, "собака", 3, "Математика");
+    // ИСПРАВЛЕНО: удалили текстовые заголовки
+    btreeInsert(tree, "кот", 1);
+    btreeInsert(tree, "бэкап", 2);
+    btreeInsert(tree, "собака", 3);
     assert(tree->size == 3);
     freeBTree(tree);
     printf("TestInsertMultiple success!\n");
@@ -52,14 +57,14 @@ void testInsertMultiple(void) {
 void testSearchExisting(void) {
     printf("TestSearchExisting...\n");
     BTree *tree = createBTree();
-    btreeInsert(tree, "кот", 1, "Матан");
-    btreeInsert(tree, "бобёр", 2, "Линал");
+    // ИСПРАВЛЕНО: удалили текстовые заголовки
+    btreeInsert(tree, "кот", 1);
+    btreeInsert(tree, "бэкап", 2);
     Vector *result = btreeSearch(tree, "кот");
     assert(result != NULL);
     PostingEntry *e = (PostingEntry*)getVectorItem(result, 0);
     assert(e != NULL);
-    assert(e->doc_id == 1);
-    assert(strcmp(e->title, "Матан") == 0);
+    assert(e->doc_id == 1); // Проверка только по doc_id
     freeBTree(tree);
     printf("TestSearchExisting success!\n");
 }
@@ -67,7 +72,8 @@ void testSearchExisting(void) {
 void testSearchNotExisting(void) {
     printf("TestSearchNotExisting...\n");
     BTree *tree = createBTree();
-    btreeInsert(tree, "кот", 1, "Матан");
+    // ИСПРАВЛЕНО: удалили текстовый заголовок
+    btreeInsert(tree, "кот", 1);
     Vector *result = btreeSearch(tree, "тигр");
     assert(result == NULL);
     freeBTree(tree);
@@ -77,12 +83,13 @@ void testSearchNotExisting(void) {
 void testInsertSplit(void) {
     printf("TestInsertSplit...\n");
     BTree *tree = createBTree();
-    btreeInsert(tree, "бобёр", 1, "doc1");
-    btreeInsert(tree, "кот", 2, "doc2");
-    btreeInsert(tree, "лиса", 3, "doc3");
-    btreeInsert(tree, "медведь", 4, "doc4");
-    btreeInsert(tree, "собака", 5, "doc5");
-    btreeInsert(tree, "тигр", 6, "doc6");
+    // ИСПРАВЛЕНО: удалили текстовые заголовки
+    btreeInsert(tree, "бобёр", 1);
+    btreeInsert(tree, "кот", 2);
+    btreeInsert(tree, "лиса", 3);
+    btreeInsert(tree, "медведь", 4);
+    btreeInsert(tree, "собака", 5);
+    btreeInsert(tree, "тигр", 6);
     assert(tree->root->is_leaf == 0);
     assert(tree->size == 6);
     freeBTree(tree);
@@ -92,8 +99,9 @@ void testInsertSplit(void) {
 void testInsertOrder(void) {
     printf("TestInsertOrder...\n");
     BTree *tree = createBTree();
-    btreeInsert(tree, "ббб", 1, "doc1");
-    btreeInsert(tree, "ааа", 2, "doc2");
+    // ИСПРАВЛЕНО: удалили текстовые заголовки
+    btreeInsert(tree, "ббб", 1);
+    btreeInsert(tree, "ааа", 2);
     assert(strcmp(tree->root->keys[0], "ааа") == 0);
     assert(strcmp(tree->root->keys[1], "ббб") == 0);
     freeBTree(tree);
@@ -103,9 +111,10 @@ void testInsertOrder(void) {
 void testInsertOrderReverse(void) {
     printf("TestInsertOrderReverse...\n");
     BTree *tree = createBTree();
-    btreeInsert(tree, "ггг", 1, "doc1");
-    btreeInsert(tree, "ввв", 2, "doc2");
-    btreeInsert(tree, "ааа", 3, "doc3");
+    // ИСПРАВЛЕНО: удалили текстовые заголовки
+    btreeInsert(tree, "ггг", 1);
+    btreeInsert(tree, "ввв", 2);
+    btreeInsert(tree, "ааа", 3);
     assert(strcmp(tree->root->keys[0], "ааа") == 0);
     assert(strcmp(tree->root->keys[1], "ввв") == 0);
     assert(strcmp(tree->root->keys[2], "ггг") == 0);
@@ -116,9 +125,10 @@ void testInsertOrderReverse(void) {
 void testInsertOrderMixed(void) {
     printf("TestInsertOrderMixed...\n");
     BTree *tree = createBTree();
-    btreeInsert(tree, "ввв", 1, "doc1");
-    btreeInsert(tree, "ааа", 2, "doc2");
-    btreeInsert(tree, "ббб", 3, "doc3");
+    // ИСПРАВЛЕНО: удалили текстовые заголовки
+    btreeInsert(tree, "ввв", 1);
+    btreeInsert(tree, "ааа", 2);
+    btreeInsert(tree, "ббб", 3);
     assert(strcmp(tree->root->keys[0], "ааа") == 0);
     assert(strcmp(tree->root->keys[1], "ббб") == 0);
     assert(strcmp(tree->root->keys[2], "ввв") == 0);
@@ -129,18 +139,17 @@ void testInsertOrderMixed(void) {
 void testDuplicateInsert(void) {
     printf("TestDuplicateInsert...\n");
     BTree *tree = createBTree();
-    btreeInsert(tree, "кот", 1, "doc1");
-    btreeInsert(tree, "кот", 2, "doc2");
+    // ИСПРАВЛЕНО: удалили текстовые заголовки
+    btreeInsert(tree, "кот", 1);
+    btreeInsert(tree, "кот", 2);
     assert(tree->size == 1);
     Vector *result = btreeSearch(tree, "кот");
     assert(result != NULL);
     assert(result->size == 2);
     PostingEntry *e0 = (PostingEntry*)getVectorItem(result, 0);
     PostingEntry *e1 = (PostingEntry*)getVectorItem(result, 1);
-    assert(e0->doc_id == 1);
-    assert(strcmp(e0->title, "doc1") == 0);
-    assert(e1->doc_id == 2);
-    assert(strcmp(e1->title, "doc2") == 0);
+    assert(e0->doc_id == 1); // ИСПРАВЛЕНО: проверка по doc_id
+    assert(e1->doc_id == 2); // ИСПРАВЛЕНО: проверка по doc_id
     freeBTree(tree);
     printf("TestDuplicateInsert success!\n");
 }
@@ -148,17 +157,18 @@ void testDuplicateInsert(void) {
 void testDoubleSplit(void) {
     printf("TestDoubleSplit...\n");
     BTree *tree = createBTree();
-    btreeInsert(tree, "ааа", 1, "doc1");
-    btreeInsert(tree, "ббб", 2, "doc2");
-    btreeInsert(tree, "ввв", 3, "doc3");
-    btreeInsert(tree, "ггг", 4, "doc4");
-    btreeInsert(tree, "ддд", 5, "doc5");
-    btreeInsert(tree, "еее", 6, "doc6");
-    btreeInsert(tree, "жжж", 7, "doc7");
-    btreeInsert(tree, "ззз", 8, "doc8");
-    btreeInsert(tree, "ийй", 9, "doc9");
-    btreeInsert(tree, "ккк", 10, "doc10");
-    btreeInsert(tree, "ллл", 11, "doc11");
+    // ИСПРАВЛЕНО: удалили текстовые заголовки
+    btreeInsert(tree, "ааа", 1);
+    btreeInsert(tree, "ббб", 2);
+    btreeInsert(tree, "ввв", 3);
+    btreeInsert(tree, "ггг", 4);
+    btreeInsert(tree, "ддд", 5);
+    btreeInsert(tree, "еее", 6);
+    btreeInsert(tree, "жжж", 7);
+    btreeInsert(tree, "ззз", 8);
+    btreeInsert(tree, "ийй", 9);
+    btreeInsert(tree, "ккк", 10);
+    btreeInsert(tree, "ллл", 11);
     
     assert(tree->root->is_leaf == 0);
     const char *keys[] = {"ааа","ббб","ввв","ггг","ддд","еее","жжж","ззз","ийй","ккк","ллл"};
@@ -177,12 +187,13 @@ void testDoubleSplit(void) {
 void testSearchAfterSplit(void) {
     printf("TestSearchAfterSplit...\n");
     BTree *tree = createBTree();
-    btreeInsert(tree, "бобёр", 1, "doc1");
-    btreeInsert(tree, "кот", 2, "doc2");
-    btreeInsert(tree, "лиса", 3, "doc3");
-    btreeInsert(tree, "медведь", 4, "doc4");
-    btreeInsert(tree, "собака", 5, "doc5");
-    btreeInsert(tree, "тигр", 6, "doc6");
+    // ИСПРАВЛЕНО: удалили текстовые заголовки
+    btreeInsert(tree, "бобёр", 1);
+    btreeInsert(tree, "кот", 2);
+    btreeInsert(tree, "лиса", 3);
+    btreeInsert(tree, "медведь", 4);
+    btreeInsert(tree, "собака", 5);
+    btreeInsert(tree, "тигр", 6);
 
     const char *present[] = {"бобёр","кот","лиса","медведь","собака","тигр"};
     for (int i = 0; i < 6; i++) {
@@ -198,6 +209,7 @@ void testSearchAfterSplit(void) {
 }
 
 static void collectKeysCallback(const char *key, Vector *postings, void *ctx) {
+    (void)postings; // Игнорируем неиспользуемый параметр
     Vector *collected = (Vector*)ctx;
     char *dup = strdup(key);
     appendVectorItem(collected, &dup);
@@ -206,9 +218,10 @@ static void collectKeysCallback(const char *key, Vector *postings, void *ctx) {
 void testTraverse(void) {
     printf("TestTraverse...\n");
     BTree *tree = createBTree();
-    btreeInsert(tree, "ввв", 1, "doc1");
-    btreeInsert(tree, "ааа", 2, "doc2");
-    btreeInsert(tree, "ббб", 3, "doc3");
+    // ИСПРАВЛЕНО: удалили текстовые заголовки
+    btreeInsert(tree, "ввв", 1);
+    btreeInsert(tree, "ааа", 2);
+    btreeInsert(tree, "ббб", 3);
 
     Vector *collected = createVector(sizeof(char*));
     btreeTraverse(tree, collectKeysCallback, collected);
@@ -234,11 +247,12 @@ void testInsertSizeTracking(void) {
     printf("TestInsertSizeTracking...\n");
     BTree *tree = createBTree();
     assert(tree->size == 0);
-    btreeInsert(tree, "ааа", 1, "doc1");
+    // ИСПРАВЛЕНО: удалили текстовые заголовки
+    btreeInsert(tree, "ааа", 1);
     assert(tree->size == 1);
-    btreeInsert(tree, "ббб", 2, "doc2");
+    btreeInsert(tree, "ббб", 2);
     assert(tree->size == 2);
-    btreeInsert(tree, "ааа", 3, "doc3");
+    btreeInsert(tree, "ааа", 3);
     assert(tree->size == 2);
     freeBTree(tree);
     printf("TestInsertSizeTracking success!\n");
@@ -258,7 +272,8 @@ int main(void) {
     testDuplicateInsert();
     testDoubleSplit();
     testSearchAfterSplit();
-    testTraverse(); 
+    testTraverse();
     testInsertSizeTracking();
+    printf("=== ALL BTREE TESTS PASSED ===\n");
     return 0;
 }

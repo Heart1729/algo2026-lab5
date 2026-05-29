@@ -56,8 +56,8 @@ int main() {
     char word2[] = "bbb";
     int docid1 = 1;
     int docid2 = 2;
-    rbInsert(tree, word1, docid1, NULL);
-    rbInsert(tree, word2, docid2, NULL);
+    rbInsert(tree, word1, docid1);
+    rbInsert(tree, word2, docid2);
     assert(tree->size == 2);
 
     assert(tree->root->left == tree->nil);
@@ -72,7 +72,7 @@ int main() {
     printf("Тест 2 пройден\n");
 
 
-    rbInsert(tree, "aaa", 3, "Title Doc 3");
+    rbInsert(tree, "aaa", 3);
 
     assert(tree->size == 2);
     Vector* aaa_postings = rbSearch(tree, "aaa");
@@ -81,13 +81,13 @@ int main() {
     printf("Тест 3 пройден\n");
 
     // Исходно: aaa(Ч) -> bbb(К)
-    rbInsert(tree, "000", 4, NULL);
+    rbInsert(tree, "000", 4);
     // Теперь: aaa(Ч) имеет двух детей: 000(К) и bbb(К)
 
     // Вставляем "ccc" (правый сын для "bbb").
     // Это запускает Случай 1: папа и дядя должны стать черными, дед (aaa) — красным,
     // но так как дед — корень, в конце он снова станет черным.
-    rbInsert(tree, "ccc", 5, NULL);
+    rbInsert(tree, "ccc", 5);
 
     RBNode* node_aaa = tree->root;
     RBNode* node_000 = rbSearchNode(tree, "000");
@@ -115,14 +115,14 @@ int main() {
     assert(rotation_tree != NULL);
 
     //Черный корень
-    rbInsert(rotation_tree, "10", 1, NULL);
+    rbInsert(rotation_tree, "10", 1);
 
     //Правый красный сын
-    rbInsert(rotation_tree, "20", 1, NULL);
+    rbInsert(rotation_tree, "20", 1);
 
     // Вставляем "30" — это создает линию из красных узлов справа (10 -> 20 -> 30).
     // Случай RR. Должен произойти левый поворот вокруг "10".
-    rbInsert(rotation_tree, "30", 1, NULL);
+    rbInsert(rotation_tree, "30", 1);
 
     RBNode* node_10 = rbSearchNode(rotation_tree, "10");
     RBNode* node_20 = rbSearchNode(rotation_tree, "20");
@@ -142,7 +142,7 @@ int main() {
     assert(node_30->parent == node_20);
     assert(node_30->color == RB_RED);
 
-    rbInsert(rotation_tree, "25", 1, NULL);
+    rbInsert(rotation_tree, "25", 1);
 
     RBNode* node_25 = rbSearchNode(rotation_tree, "25");
     assert(node_25 != NULL);
@@ -155,7 +155,7 @@ int main() {
     // Случай RL.
     // Вставляем "28". Она пойдет направо от "25".
     // Структура справа от корня: 30(Ч) -> 25(К) -> 28(К). Дядя для "28" — это правый сын "30".
-    rbInsert(rotation_tree, "28", 1, NULL);
+    rbInsert(rotation_tree, "28", 1);
 
     RBNode* node_28 = rbSearchNode(rotation_tree, "28");
     assert(node_28 != NULL);
@@ -188,13 +188,13 @@ int main() {
     RBTree* left_rotation_tree = createRBTree();
     assert(left_rotation_tree != NULL);
 
-    rbInsert(left_rotation_tree, "33", 1, NULL);
+    rbInsert(left_rotation_tree, "33", 1);
 
-    rbInsert(left_rotation_tree, "22", 1, NULL);
+    rbInsert(left_rotation_tree, "22", 1);
 
     // Cоздается линия из красных узлов слева (33 -> 22 -> 11).
     // Cлучай LL. Правый поворот вокруг "33".
-    rbInsert(left_rotation_tree, "11", 1, NULL);
+    rbInsert(left_rotation_tree, "11", 1);
 
     RBNode* node_11 = rbSearchNode(left_rotation_tree, "11");
     RBNode* node_22 = rbSearchNode(left_rotation_tree, "22");
@@ -215,7 +215,7 @@ int main() {
 
     // Вставляем "15" — для узла "11" это правый сын.
     // Перекраска, так как дядя "33" красный.
-    rbInsert(left_rotation_tree, "15", 1, NULL);
+    rbInsert(left_rotation_tree, "15", 1);
 
     RBNode* node_15 = rbSearchNode(left_rotation_tree, "15");
     assert(node_15 != NULL);
@@ -227,7 +227,7 @@ int main() {
     // Структура слева от корня: 11(Ч) -> 15(К) -> 13(К).
     // Дядя для "13" — это левый сын "11" (nil).
     // LR. Сначала правый поворот вокруг 15, затем левый вокруг деда 11.
-    rbInsert(left_rotation_tree, "13", 1, NULL);
+    rbInsert(left_rotation_tree, "13", 1);
 
     RBNode* node_13 = rbSearchNode(left_rotation_tree, "13");
     assert(node_13 != NULL);
