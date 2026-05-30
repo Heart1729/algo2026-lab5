@@ -1,8 +1,9 @@
 CC     = gcc
 CFLAGS = -Wall -Wextra -std=c11 -O2 -g
 
-OBJ_SHARED = posting.o avl/avl.o rbtree/rbtree.o btree/btree.o \
-             index/index.o index/search.o
+OBJ_SHARED = posting.o vector/generic.o hash_table/generic.o \
+             avl/avl.o rbtree/rbtree.o btree/btree.o \
+             index/index.o index/search.o index/cJSON.o
 
 .PHONY: all app u_tests test clean
 
@@ -11,14 +12,14 @@ all: app u_tests
 app: $(OBJ_SHARED) main.o
 	$(CC) $(CFLAGS) -o app $(OBJ_SHARED) main.o
 
-test_avl: posting.o avl/avl.o avl/tests.o
-	$(CC) $(CFLAGS) -o test_avl posting.o avl/avl.o avl/tests.o
+test_avl: posting.o vector/generic.o hash_table/generic.o avl/avl.o avl/tests.o
+	$(CC) $(CFLAGS) -o test_avl posting.o vector/generic.o hash_table/generic.o avl/avl.o avl/tests.o
 
-test_rb: posting.o rbtree/rbtree.o rbtree/tests.o
-	$(CC) $(CFLAGS) -o test_rb posting.o rbtree/rbtree.o rbtree/tests.o
+test_rb: posting.o vector/generic.o hash_table/generic.o rbtree/rbtree.o rbtree/tests.o
+	$(CC) $(CFLAGS) -o test_rb posting.o vector/generic.o hash_table/generic.o rbtree/rbtree.o rbtree/tests.o
 
-test_btree: posting.o btree/btree.o btree/tests.o
-	$(CC) $(CFLAGS) -o test_btree posting.o btree/btree.o btree/tests.o
+test_btree: posting.o vector/generic.o hash_table/generic.o btree/btree.o btree/tests.o
+	$(CC) $(CFLAGS) -o test_btree posting.o vector/generic.o hash_table/generic.o btree/btree.o btree/tests.o
 
 u_tests: test_avl test_rb test_btree
 	./test_avl
@@ -47,5 +48,5 @@ test: app
 
 clean:
 	rm -f app test_avl test_rb test_btree
-	rm -f *.o avl/*.o rbtree/*.o btree/*.o index/*.o
+	rm -f *.o avl/*.o rbtree/*.o btree/*.o index/*.o vector/*.o hash_table/*.o
 	rm -f data/index_*.txt data/test/docs.jsonl data/test/idx_*.txt

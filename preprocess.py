@@ -28,15 +28,17 @@ def preprocess(input_path: Path, output_path: Path, limit: int | None) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     count = 0
-    with open(input_path, encoding="utf-8") as f, open(output_path, "w", encoding="utf-8") as out:
+    with open(input_path, encoding="utf-8", errors="ignore") as f, open(output_path, "w", encoding="utf-8") as out:
         reader = csv.DictReader(f)
         for row in reader:
             if limit is not None and count >= limit:
                 break
 
-            doc_id = row.get("Id", "")
-            title = row.get("Title", "")
-            body = row.get("Body", "")
+            # Если "Id" нет или он пустой, используем уникальный count
+            doc_id = row.get("Id") or str(count + 1)
+            # Иногда в датасетах колонки называются с маленькой буквы
+            title = row.get("Title") or row.get("title", "")
+            body = row.get("Body") or row.get("body", "")
 
             tokens = tokenize(title + " " + body)
             if not tokens:

@@ -3,20 +3,39 @@
 #include <string.h>
 #include <time.h>
 #include "index/index.h"
-#include "index/search.h"
 
+static const char* typeName(TreeType type) {
+    switch (type) {
+        case TREE_AVL:
+            return "avl";
+        case TREE_RB:
+            return "rb";
+        case TREE_BTREE:
+            return "btree";
+        default:
+            return "avl";
+    }
+}
 
-static void runSearch(TreeType type, const char* idx_path,
-                      const char* query, int json_out) {
-    // Index* idx = loadIndex(idx_path, type);
-    // if (!idx) { fprintf(stderr, "Failed to load index: %s\n", idx_path); exit(1); }
+static TreeType parseType(const char* value) {
+    if (strcmp(value, "rb") == 0) {
+        return TREE_RB;
+    }
+    if (strcmp(value, "btree") == 0) {
+        return TREE_BTREE;
+    }
+    return TREE_AVL;
+}
 
-    // SearchResults* sr = search(idx, query);
-    // if (json_out) printResultsJSON(sr);
-    // else          printResultsText(sr);
-
-    // freeSearchResults(sr);
-    // freeIndex(idx);
+static void printJsonString(const char* value) {
+    putchar('"');
+    for (const char* p = value; *p != '\0'; p++) {
+        if (*p == '"' || *p == '\\') {
+            putchar('\\');
+        }
+        putchar(*p);
+    }
+    putchar('"');
 }
 
 static void usage(const char* prog) {
@@ -27,7 +46,7 @@ static void usage(const char* prog) {
         prog, prog);
 }
 
-int main(int argc, char* argv[]) { // пример)
+int main(int argc, char* argv[]) {
     if (argc < 3) { usage(argv[0]); return 1; }
 
     const char* mode = argv[1];

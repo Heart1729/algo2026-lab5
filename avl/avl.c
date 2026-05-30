@@ -1,2 +1,328 @@
-// Делайте на ваше усмотрение, главное, чтобы интерфейс был таким же, как в rbtree и btree, чтобы не менять код в main.c
-// Ну и переиспользуйте код из предыдущих лабораторных, если он вам подходит
+#include "avl.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+
+Vector* avlSearch(const AVLTree* tree, const char* key)
+{
+    if (!tree) {
+        printf("Problem in 'avlSearch'\n-> Given tree is NULL.\n");
+        return NULL;
+    }
+
+    AVLNode* cur_node = tree->root;
+
+    while (cur_node) {
+        int cmp = strcmp(key, cur_node->key);
+
+        if (cmp < 0)
+            cur_node = cur_node->left;
+        
+        else if (cmp > 0)
+            cur_node = cur_node->right;
+
+        else
+            return cur_node->postings;
+    }
+
+    return NULL;
+}
+
+AVLTree* createAVLTree(void)
+{
+    AVLTree* avl_tree = malloc(sizeof(AVLTree));
+    if (avl_tree == NULL) {
+        printf("Не удалось выделить память под дерево");
+        return NULL;
+    }
+
+    avl_tree->root = NULL;
+    avl_tree->size = 0;
+
+    return avl_tree;
+}
+
+AVLNode* createAVLNode(const char* key, int doc_id)
+{
+    if (key == NULL) {
+        return NULL;
+    }
+
+    AVLNode* node = malloc(sizeof(AVLNode));
+    if (node == NULL) {
+        printf("Не удалось выделить память под узел");
+        return NULL;
+    }
+
+    node->key = malloc(strlen(key) + 1);
+    if (node->key == NULL) {
+        free(node);
+        printf("Не удалось выделить память под ключ");
+        return NULL;
+    }
+    strcpy(node->key, key);
+    
+    node->height = 1;
+    node->postings = createPostingList();
+    if (node->postings == NULL) {
+        free(node->key);
+        free(node);
+        printf("Не удалось выделить память под Posting list");
+        return NULL;
+    }
+
+    node->left = NULL;
+    node->right = NULL;
+    appendPosting(node->postings, doc_id);
+
+    return node;
+}
+
+static void freeNode(AVLNode* node)
+{
+    if (node == NULL) {
+        return;
+    }
+    
+    free(node->key);
+    if (node->postings != NULL) {
+        vectorFree(node->postings);
+    }
+
+    freeNode(node->left);
+    freeNode(node->right);
+
+    free(node);
+}
+
+void freeAVLTree(AVLTree* tree)
+{
+    if (tree == NULL) {
+        return;
+    }
+
+    freeNode(tree->root);
+    free(tree);
+}
+
+static int height(AVLNode* node)
+{
+    if (node == NULL) {
+        return 0;
+    }
+
+    return node->height;
+}
+
+static int balanceNode(AVLNode* node)
+{
+    if (node == NULL) {
+        return 0;
+    }
+
+    return height(node->left) - height(node->right);
+}
+
+static int max(int a, int b)
+{
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+static AVLNode* rotateLeft(AVLNode* a)
+{
+    AVLNode* b = a->right;
+    a->right = b->left;
+    b->left = a;
+    
+    a->height = max(height(a->left), height(a->right)) + 1;
+    b->height = max(height(b->left), height(b->right)) + 1;
+
+    return b;
+}
+
+static AVLNode* rotateRight(AVLNode* a)
+{
+    AVLNode* b = a->left;
+    a->left = b->right;
+    b->right = a;
+    
+    a->height = max(height(a->left), height(a->right)) + 1;
+    b->height = max(height(b->left), height(b->right)) + 1;
+
+    return b;
+}
+
+static AVLNode* bigRotateLeft(AVLNode* node)
+{
+    node->right = rotateRight(node->right);
+    return rotateLeft(node);
+}
+
+static AVLNode* bigRotateRight(AVLNode* node)
+{
+    node->left = rotateLeft(node->left);
+    return rotateRight(node);
+}
+
+static AVLNode* insertNode(AVLNode* node, const char* key, int doc_id, int* created)
+{
+    if (node == NULL) {
+        *created = 1;
+        return createAVLNode(key, doc_id); 
+    }
+    
+    int cmp = strcmp(key, node->key);
+
+    if (cmp < 0) {
+        node->left = insertNode(node->left, key, doc_id, created);
+    } else if (cmp > 0) {
+        node->right = insertNode(node->right, key, doc_id, created);
+    }
+    
+    node->height = 1 + max(height(node->left), height(node->right));
+    int balance = balanceNode(node);
+    
+    if (balance < -1 && balanceNode(node->right) <= 0) {
+        return rotateLeft(node);
+    }
+
+    if (balance > 1 && balanceNode(node->left) >= 0) {
+        return rotateRight(node);
+    }
+
+    if (balance < -1 && balanceNode(node->right) == 1) {
+        return bigRotateLeft(node);
+    }
+
+    if (balance > 1 && balanceNode(node->left) == -1) {
+        return bigRotateRight(node);
+    }
+    
+    return node;
+}
+
+void avlInsert(AVLTree* tree, const char* key, int doc_id)
+{
+    if (tree == NULL || key == NULL) {
+        return;
+    }
+
+    Vector* postings = avlSearch(tree, key);
+    if (postings != NULL) {
+        if (postings->size > 0) {
+            PostingEntry* last = getVectorItem(postings, postings->size - 1);
+            if (last && last->doc_id == doc_id) {
+                return;
+            }
+        }
+        
+        appendPosting(postings, doc_id);
+        return;
+    }
+
+    int created = 0;
+    tree->root = insertNode(tree->root, key, doc_id, &created);
+    
+    if (created) {
+        tree->size++;
+    }
+}
+
+static void traverseNode(AVLNode* node, void (*visit)(const char* key, Vector* postings, void* ctx), void* ctx)
+{
+    if (node == NULL) {
+        return;
+    }
+    
+    traverseNode(node->left, visit, ctx);
+    visit(node->key, node->postings, ctx);
+    traverseNode(node->right, visit, ctx);
+}
+
+void avlTraverse(const AVLTree* tree, 
+                 void (*visit)(const char* key, Vector* postings, void* ctx),
+                 void* ctx)
+{
+    if (tree == NULL || visit == NULL) {
+        return;
+    }
+
+    traverseNode(tree->root, visit, ctx);
+}
+
+static void avlFuzzyTraverse(AVLNode* node, const char* term, int max_distance, Vector* candidates) {
+    if (node == NULL) {
+        return;
+    }
+    
+    avlFuzzyTraverse(node->left, term, max_distance, candidates);
+    
+    int distance = levenshteinDistance(term, node->key);
+    if (distance <= max_distance) {
+        AVLFuzzyCandidate candidate;
+        strncpy(candidate.candidate_key, node->key, 255);
+        candidate.candidate_key[255] = '\0';
+        candidate.distance = distance;
+        
+        candidate.postings = createVector(sizeof(PostingEntry));
+        if (candidate.postings != NULL && node->postings != NULL) {
+            for (size_t i = 0; i < node->postings->size; i++) {
+                PostingEntry* entry = getVectorItem(node->postings, i);
+                appendVectorItem(candidate.postings, entry);
+            }
+        }
+        appendVectorItem(candidates, &candidate);
+    }
+    
+    avlFuzzyTraverse(node->right, term, max_distance, candidates);
+}
+
+
+static int compare_avl_candidates(const void* a, const void* b) {
+    const AVLFuzzyCandidate* ca = (const AVLFuzzyCandidate*)a;
+    const AVLFuzzyCandidate* cb = (const AVLFuzzyCandidate*)b;
+    
+    if (ca->distance < cb->distance) {
+        return -1;
+    } else if (ca->distance > cb->distance) {
+        return 1;
+    }
+    return 0;
+}
+
+Vector* avlFuzzyFindCandidates(const AVLTree* tree, const char* term, int max_distance) {
+    Vector* candidates = createVector(sizeof(AVLFuzzyCandidate));
+    if (candidates == NULL) {
+        return NULL;
+    }
+    
+    if (tree == NULL || tree->root == NULL || term == NULL) {
+        return candidates;
+    }
+    
+    avlFuzzyTraverse(tree->root, term, max_distance, candidates);
+    qsort(candidates->data, candidates->size, sizeof(AVLFuzzyCandidate), compare_avl_candidates);
+    
+    return candidates;
+}
+
+void freeAVLFuzzyCandidates(Vector* candidates) {
+    if (candidates == NULL) {
+        return;
+    }
+
+    for (size_t i = 0; i < candidates->size; i++) {
+        AVLFuzzyCandidate* candidate = getVectorItem(candidates, i);
+        if (candidate->postings != NULL) {
+            vectorFree(candidate->postings);
+        }
+    }
+    
+    vectorFree(candidates);
+}
+
