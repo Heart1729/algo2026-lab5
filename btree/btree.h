@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../posting.h"
+#include "../levenshtein/levenshtein.h"
 
 #define BTREE_T        3
 #define BTREE_MAX_KEYS (2 * BTREE_T - 1)
@@ -13,6 +14,12 @@ typedef struct BTreeNode {
     int               n;
     int               is_leaf;
 } BTreeNode;
+
+typedef struct {
+    char    term[256];
+    int     distance;
+    Vector* postings;
+} BTreeFuzzyCandidate;
 
 typedef struct {
     BTreeNode* root;
@@ -32,3 +39,6 @@ void    btreeTraverse(
     void (*visit)(const char* key, Vector* postings, void* ctx),
     void* ctx
 );
+
+Vector* btreeFuzzyFindCandidates(const BTree* tree, const char* term, int max_distance);
+void freeFuzzyCandidates(Vector* candidates);

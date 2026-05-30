@@ -1,6 +1,13 @@
 #pragma once
 
 #include "../posting.h"
+#include "../levenshtein/levenshtein.h"
+
+typedef struct {
+    char    candidate_key[256];
+    int     distance;
+    Vector* postings;
+} AVLFuzzyCandidate;
 
 typedef struct AVLNode {
     char*           key;
@@ -25,3 +32,7 @@ void    avlTraverse(
     void (*visit)(const char* key, Vector* postings, void* ctx),
     void* ctx
 );
+
+Vector* avlFuzzyFindCandidates(const AVLTree* tree, const char* term, int max_distance);
+void freeAVLFuzzyCandidates(Vector* candidates);
+
