@@ -265,3 +265,80 @@ void    btreeTraverse(
 
     traverseNode(tree->root, visit, ctx);
 }
+
+static void btreeFuzzyTraverse(BTreeNode* node, const char* term, int max_distance, Vector* candidates) {
+    if (node == NULL) {
+        return;
+    }
+    
+    for (int i = 0; i < node->n; i++) {
+        if (node->is_leaf == 0) {
+            btreeFuzzyTraverse(node->children[i], term, max_distance, candidates);
+        }
+        
+        int distance = levenshteinDistance(term, node->keys[i]);
+        if (distance <= max_distance) {
+            BTreeFuzzyCandidate candidate;
+            strncpy(candidate.term, node->keys[i], 255);
+            candidate.term[255] = '\0';
+            candidate.distance = distance;
+            
+            candidate.postings = createVector(sizeof(PostingEntry));
+            if (candidate.postings != NULL && node->postings[i] != NULL) {
+                for (size_t j = 0; j < node->postings[i]->size; j++) {
+                    PostingEntry* entry = getVectorItem(node->postings[i], j);
+                    appendVectorItem(candidate.postings, entry);
+                }
+            }
+            appendVectorItem(candidates, &candidate);
+        }
+    }
+    
+    if (node->is_leaf == 0) {
+        btreeFuzzyTraverse(node->children[node->n], term, max_distance, candidates);
+    }
+}
+
+static int compare_btree_candidates(const void* a, const void* b) {
+    const BTreeFuzzyCandidate* ca = (const BTreeFuzzyCandidate*)a;
+    const BTreeFuzzyCandidate* cb = (const BTreeFuzzyCandidate*)b;
+    
+    if (ca->distance < cb->distance) {
+        return -1;
+    } else if (ca->distance > cb->distance) {
+        return 1;
+    }
+    return 0;
+}
+
+Vector* btreeFuzzyFindCandidates(const BTree* tree, const char* term, int max_distance) {
+    Vector* candidates = createVector(sizeof(BTreeFuzzyCandidate));
+    if (candidates == NULL) {
+        return NULL;
+    }
+    
+    if (tree == NULL || tree->root == NULL || term == NULL) {
+        return candidates;
+    }
+    
+    btreeFuzzyTraverse(tree->root, term, max_distance, candidates);
+    qsort(candidates->data, candidates->size, sizeof(BTreeFuzzyCandidate), compare_btree_candidates);
+    
+    return candidates;
+}
+
+void freeBTreeFuzzyCandidates(Vector* candidates) {
+    if (candidates == NULL) {
+        return;
+    }
+    
+    for (size_t i = 0; i < candidates->size; i++) {
+        BTreeFuzzyCandidate* candidate = getVectorItem(candidates, i);
+        if (candidate->postings != NULL) {
+            vectorFree(candidate->postings);
+        }
+    }
+    
+    vectorFree(candidates);
+}
+

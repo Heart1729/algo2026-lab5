@@ -417,3 +417,141 @@ void freeSearchResults(SearchResults* sr) {
     vectorFree(sr->results);
     free(sr);
 }
+
+Vector* fuzzyFindCandidates(const Index* idx, const char* term, int max_distance) {
+    if (idx == NULL || term == NULL) {
+        return NULL;
+    }
+    
+    switch (idx->type) {
+        case TREE_AVL:
+            return avlFuzzyFindCandidates((AVLTree*)idx->tree, term, max_distance);
+        case TREE_RB:
+            return rbFuzzyFindCandidates((RBTree*)idx->tree, term, max_distance);
+        case TREE_BTREE:
+            return btreeFuzzyFindCandidates((BTree*)idx->tree, term, max_distance);
+        default:
+            return NULL;
+    }
+}
+
+void freeFuzzyCandidates(Vector* candidates) {
+    if (candidates == NULL) {
+        return;
+    }
+
+    for (size_t i = 0; i < candidates->size; i++) {
+        FuzzyCandidate* candidate = getVectorItem(candidates, i);
+        if (candidate->postings != NULL) {
+            vectorFree(candidate->postings);
+        }
+    }
+    
+    vectorFree(candidates);
+}
+
+static int compare_doc_score(const void* a, const void* b) {
+    const DocInfo* da = (const DocInfo*)a;
+    const DocInfo* db = (const DocInfo*)b;
+    return db->score - da->score;
+}
+
+SearchResults* fuzzySearch(const Index* idx, const char* query, int max_distance) {
+    if (idx == NULL || query == NULL) {
+        return NULL;
+    }
+
+    clock_t start_time = clock();
+    
+    char query_copy[1024];
+    strncpy(query_copy, query, 1023);
+    query_copy[1023] = '\0';
+    
+    char* tokens[100];
+    int token_count = 0;
+    char* token = strtok(query_copy, " \t\n\r,.!?;:()[]{}-");
+    while (token && token_count < 100) {
+        if (strlen(token) > 0) tokens[token_count++] = token;
+        token = strtok(NULL, " \t\n\r,.!?;:()[]{}-");
+    }
+    
+    if (token_count == 0) {
+        double elapsed = (double)(clock() - start_time) * 1000.0 / CLOCKS_PER_SEC;
+        return createSearchResults(createVector(sizeof(SearchResult)), 0, elapsed);
+    }
+    
+    Vector** candidates = malloc(token_count * sizeof(Vector*));
+    for (int i = 0; i < token_count; i++) {
+        candidates[i] = fuzzyFindCandidates(idx, tokens[i], max_distance);
+    }
+    
+    DocInfo docs[10000];
+    int doc_count = 0;
+    
+    for (int i = 0; i < token_count; i++) {
+        if (candidates[i] != NULL) {
+            continue;
+        }
+        for (size_t j = 0; j < candidates[i]->size; j++) {
+            FuzzyCandidate* fc = getVectorItem(candidates[i], j);
+            if (!fc->postings) {
+                continue;
+            }
+            
+            for (size_t k = 0; k < fc->postings->size; k++) {
+                PostingEntry* entry = getVectorItem(fc->postings, k);
+                
+                int idx = -1;
+                for (int d = 0; d < doc_count; d++) {
+                    if (docs[d].doc_id == entry->doc_id) {
+                        idx = d;
+                        break;
+                    }
+                }
+                
+                if (idx == -1 && doc_count < 10000) {
+                    idx = doc_count++;
+                    docs[idx].doc_id = entry->doc_id;
+                    docs[idx].matched_terms = 0;
+                    docs[idx].total_distance = 0;
+                }
+                
+                if (idx != -1) {
+                    docs[idx].matched_terms++;
+                    docs[idx].total_distance += fc->distance;
+                }
+            }
+        }
+    }
+    
+    for (int i = 0; i < doc_count; i++) {
+        int avg_dist = docs[i].total_distance / docs[i].matched_terms;
+        docs[i].score = docs[i].matched_terms * 10 - avg_dist;
+    }
+    qsort(docs, doc_count, sizeof(DocInfo), compare_doc_score);
+    
+    int top_n = 0;
+    if (doc_count < 10) {
+        top_n = doc_count;
+    } else {
+        top_n = 10;
+    }
+    Vector* results = createVector(sizeof(SearchResult));
+    
+    for (int i = 0; i < top_n && docs[i].score > 0; i++) {
+        SearchResult sr = {
+            .doc_id = docs[i].doc_id,
+            .score = docs[i].score
+        };
+        appendVectorItem(results, &sr);
+    }
+    
+    double elapsed = (double)(clock() - start_time) * 1000.0 / CLOCKS_PER_SEC;
+    for (int i = 0; i < token_count; i++) {
+        if (candidates[i]) freeFuzzyCandidates(candidates[i]);
+    }
+    free(candidates);
+    
+    return createSearchResults(results, doc_count, elapsed);
+}
+

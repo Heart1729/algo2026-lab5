@@ -308,3 +308,77 @@ Vector* rbSearch(const RBTree* tree, const char* key) {
 
     return NULL;
 }
+
+static void rbFuzzyTraverse(const RBTree* tree, const RBNode* node, const char* term, int max_distance, Vector* candidates) {
+    if (node == NULL || node == tree->nil) {
+        return;
+    }
+    
+    rbFuzzyTraverse(tree, node->left, term, max_distance, candidates);
+    
+    if (node->key != NULL) {
+        int distance = levenshteinDistance(term, node->key);
+        
+        if (distance <= max_distance) {
+            RBFuzzyCandidate candidate;
+            strncpy(candidate.term, node->key, 255);
+            candidate.term[255] = '\0';
+            candidate.distance = distance;
+
+            candidate.postings = createVector(sizeof(PostingEntry));
+            if (candidate.postings != NULL && node->postings != NULL) {
+                for (size_t i = 0; i < node->postings->size; i++) {
+                    PostingEntry* entry = getVectorItem(node->postings, i);
+                    appendVectorItem(candidate.postings, entry);
+                }
+            }
+            appendVectorItem(candidates, &candidate);
+        }
+    }
+    
+    rbFuzzyTraverse(tree, node->right, term, max_distance, candidates);
+}
+
+static int compare_rb_candidates(const void* a, const void* b) {
+    const RBFuzzyCandidate* ca = (const RBFuzzyCandidate*)a;
+    const RBFuzzyCandidate* cb = (const RBFuzzyCandidate*)b;
+    
+    if (ca->distance < cb->distance) {
+        return -1;
+    } else if (ca->distance > cb->distance) {
+        return 1;
+    }
+    return 0;
+}
+
+Vector* rbFuzzyFindCandidates(const RBTree* tree, const char* term, int max_distance) {
+    Vector* candidates = createVector(sizeof(RBFuzzyCandidate));
+    if (candidates == NULL) {
+        return NULL;
+    }
+    
+    if (tree == NULL || tree->root == NULL || tree->root == tree->nil || term == NULL) {
+        return candidates;
+    }
+    
+    rbFuzzyTraverse(tree, tree->root, term, max_distance, candidates);
+    qsort(candidates->data, candidates->size, sizeof(RBFuzzyCandidate), compare_rb_candidates);
+    
+    return candidates;
+}
+
+void freeRBFuzzyCandidates(Vector* candidates) {
+    if (candidates == NULL) {
+        return;
+    }
+
+    for (size_t i = 0; i < candidates->size; i++) {
+        RBFuzzyCandidate* candidate = getVectorItem(candidates, i);
+        if (candidate->postings != NULL) {
+            vectorFree(candidate->postings);
+        }
+    }
+    
+    vectorFree(candidates);
+}
+

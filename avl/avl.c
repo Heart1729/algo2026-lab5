@@ -255,3 +255,74 @@ void avlTraverse(const AVLTree* tree,
     traverseNode(tree->root, visit, ctx);
 }
 
+static void avlFuzzyTraverse(AVLNode* node, const char* term, int max_distance, Vector* candidates) {
+    if (node == NULL) {
+        return;
+    }
+    
+    avlFuzzyTraverse(node->left, term, max_distance, candidates);
+    
+    int distance = levenshteinDistance(term, node->key);
+    if (distance <= max_distance) {
+        AVLFuzzyCandidate candidate;
+        strncpy(candidate.candidate_key, node->key, 255);
+        candidate.candidate_key[255] = '\0';
+        candidate.distance = distance;
+        
+        candidate.postings = createVector(sizeof(PostingEntry));
+        if (candidate.postings != NULL && node->postings != NULL) {
+            for (size_t i = 0; i < node->postings->size; i++) {
+                PostingEntry* entry = getVectorItem(node->postings, i);
+                appendVectorItem(candidate.postings, entry);
+            }
+        }
+        appendVectorItem(candidates, &candidate);
+    }
+    
+    avlFuzzyTraverse(node->right, term, max_distance, candidates);
+}
+
+
+static int compare_avl_candidates(const void* a, const void* b) {
+    const AVLFuzzyCandidate* ca = (const AVLFuzzyCandidate*)a;
+    const AVLFuzzyCandidate* cb = (const AVLFuzzyCandidate*)b;
+    
+    if (ca->distance < cb->distance) {
+        return -1;
+    } else if (ca->distance > cb->distance) {
+        return 1;
+    }
+    return 0;
+}
+
+Vector* avlFuzzyFindCandidates(const AVLTree* tree, const char* term, int max_distance) {
+    Vector* candidates = createVector(sizeof(AVLFuzzyCandidate));
+    if (candidates == NULL) {
+        return NULL;
+    }
+    
+    if (tree == NULL || tree->root == NULL || term == NULL) {
+        return candidates;
+    }
+    
+    avlFuzzyTraverse(tree->root, term, max_distance, candidates);
+    qsort(candidates->data, candidates->size, sizeof(AVLFuzzyCandidate), compare_avl_candidates);
+    
+    return candidates;
+}
+
+void freeAVLFuzzyCandidates(Vector* candidates) {
+    if (candidates == NULL) {
+        return;
+    }
+
+    for (size_t i = 0; i < candidates->size; i++) {
+        AVLFuzzyCandidate* candidate = getVectorItem(candidates, i);
+        if (candidate->postings != NULL) {
+            vectorFree(candidate->postings);
+        }
+    }
+    
+    vectorFree(candidates);
+}
+
