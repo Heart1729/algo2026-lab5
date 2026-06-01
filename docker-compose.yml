@@ -1,0 +1,19 @@
+services:
+  builder:
+    build:
+      context: .
+      target: builder
+    image: algo2026-lab5-builder
+    profiles:
+      - build-tools
+
+  search:
+    build:
+      context: .
+      target: runner
+    image: algo2026-lab5-runner
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+    command: streamlit run app.py --server.address=0.0.0.0 --server.port=8501
